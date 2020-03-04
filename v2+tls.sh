@@ -37,9 +37,7 @@ tar xzvf openssl-1.1.1a.tar.gz
 
 sleep 2
 
-mkdir /etc/nginx
-mkdir /etc/nginx/ssl
-mkdir /etc/nginx/conf.d
+
 wget https://nginx.org/download/nginx-1.16.1.tar.gz
 tar xf nginx-1.16.1.tar.gz && rm nginx-1.16.1.tar.gz
 cd nginx-1.16.1
@@ -58,14 +56,26 @@ cd nginx-1.16.1
         --with-stream    \
         --with-stream_ssl_module
 make && make install
-certbot certonly     \
-		-d $domain     \
-        --nginx     \
-        --register-unsafely-without-email     \
-        --config-dir /etc/nginx/ssl     \
-        --nginx-ctl /etc/nginx/sbin/nginx     \
-        --nginx-server-root /etc/nginx     \
-        --agree-tos
+#certbot certonly     \
+#		-d $domain     \
+#        --nginx     \
+#        --register-unsafely-without-email     \
+#        --config-dir /etc/nginx/ssl     \
+#        --nginx-ctl /etc/nginx/sbin/nginx     \
+#        --nginx-server-root /etc/nginx     \
+#        --agree-tos
+
+mkdir /etc/nginx/ssl
+
+curl https://get.acme.sh | sh
+    ~/.acme.sh/acme.sh  --issue  -d $domain  --webroot /etc/nginx/ssl/nginx/html/
+    ~/.acme.sh/acme.sh  --installcert  -d  $domain   \
+        --key-file   /etc/nginx/ssl/$domain.key \
+        --fullchain-file /etc/nginx/ssl/fullchain.cer \
+        --reloadcmd  "service nginx force-reload"
+
+
+
 cat > /etc/nginx/nginx.conf <<-EOF
 user  nginx;
 worker_processes  1;
