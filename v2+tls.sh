@@ -13,8 +13,7 @@ yum -y install epel-release
 yum -y update
 
 yum -y install wget unzip
-yum -y install libtool perl-core zlib-devel gcc wget pcre* unzip
-useradd nginx
+yum -y install libtool perl-core zlib-devel gcc pcre*
 
 sleep 2
 
@@ -35,14 +34,13 @@ tar xzvf openssl-1.1.1d.tar.gz
 
 sleep 2
 
+useradd nginx
 wget https://nginx.org/download/nginx-1.16.1.tar.gz
 tar xf nginx-1.16.1.tar.gz && rm nginx-1.16.1.tar.gz
 cd nginx-1.16.1
 ./configure    \
-        --prefix=/etc/nginx    \
         --user=nginx    \
         --group=nginx    \
-        --conf-path=/etc/nginx/nginx.conf    \
         --with-openssl=../openssl-1.1.1d    \
         --with-openssl-opt='enable-tls1_3'    \
         --with-http_v2_module    \
@@ -54,12 +52,10 @@ cd nginx-1.16.1
         --with-stream_ssl_module
 make && make install
 
-/etc/nginx/ssl/nginx/sbin/nginx
-
-mkdir /etc/nginx/ssl
+/usr/local/nginx/sbin/nginx
 
 curl https://get.acme.sh | sh
-    ~/.acme.sh/acme.sh  --issue  -d $domain  --webroot /etc/nginx/ssl/nginx/html/
+    ~/.acme.sh/acme.sh  --issue  -d $domain  --webroot /usr/local/nginx/html/
     ~/.acme.sh/acme.sh  --installcert  -d  $domain   \
         --key-file   /usr/local/nginx/conf/$domain.key \
         --fullchain-file /usr/local/nginx/conf/fullchain.cer \
@@ -67,9 +63,9 @@ curl https://get.acme.sh | sh
 
 
 
-cat > /etc/nginx/nginx.conf <<-EOF
-user  nginx;
-worker_processes  1;
+cat > /usr/local/nginx/conf/nginx.conf <<-EOF
+user nginx;
+worker_processes 1;
 pid        /usr/local/nginx/logs/nginx.pid;
 events {
     worker_connections  1024;
