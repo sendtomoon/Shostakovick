@@ -10,7 +10,6 @@ sleep 2
 
 yum -y install yum-utils
 yum -y install epel-release
-yum -y update
 
 yum -y install wget unzip
 yum -y install libtool perl-core zlib-devel gcc pcre*
