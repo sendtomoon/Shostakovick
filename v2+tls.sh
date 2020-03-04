@@ -1,4 +1,5 @@
 #!/bin/bash
+
 function green(){
     echo -e "\033[32m\033[01m$1\033[0m"
 }
@@ -14,7 +15,6 @@ yum -y update
 yum -y install wget unzip
 yum -y install libtool perl-core zlib-devel gcc wget pcre* unzip
 useradd nginx
-/etc/nginx/sbin/nginx
 
 sleep 2
 
@@ -25,16 +25,15 @@ unzip ./v2ray/v2ray-linux-64.zip -d ./v2ray
 
 sleep 2
 
-sh -c "sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config"
+sed -i "s/SELINUX=enforcing/SELINUX=disabled/g" /etc/selinux/config
 setenforce 0
 
 sleep 2
 
-wget https://www.openssl.org/source/openssl-1.1.1a.tar.gz
-tar xzvf openssl-1.1.1a.tar.gz
+wget https://www.openssl.org/source/openssl-1.1.1d.tar.gz
+tar xzvf openssl-1.1.1d.tar.gz
 
 sleep 2
-
 
 wget https://nginx.org/download/nginx-1.16.1.tar.gz
 tar xf nginx-1.16.1.tar.gz && rm nginx-1.16.1.tar.gz
@@ -44,7 +43,7 @@ cd nginx-1.16.1
         --user=nginx    \
         --group=nginx    \
         --conf-path=/etc/nginx/nginx.conf    \
-        --with-openssl=../openssl-1.1.1a    \
+        --with-openssl=../openssl-1.1.1d    \
         --with-openssl-opt='enable-tls1_3'    \
         --with-http_v2_module    \
         --with-http_ssl_module    \
@@ -55,13 +54,15 @@ cd nginx-1.16.1
         --with-stream_ssl_module
 make && make install
 
+/etc/nginx/ssl/nginx/sbin/nginx
+
 mkdir /etc/nginx/ssl
 
 curl https://get.acme.sh | sh
     ~/.acme.sh/acme.sh  --issue  -d $domain  --webroot /etc/nginx/ssl/nginx/html/
     ~/.acme.sh/acme.sh  --installcert  -d  $domain   \
-        --key-file   /etc/nginx/ssl/$domain.key \
-        --fullchain-file /etc/nginx/ssl/fullchain.cer \
+        --key-file   /usr/local/nginx/conf/$domain.key \
+        --fullchain-file /usr/local/nginx/conf/fullchain.cer \
         --reloadcmd  "service nginx force-reload"
 
 
@@ -69,12 +70,12 @@ curl https://get.acme.sh | sh
 cat > /etc/nginx/nginx.conf <<-EOF
 user  nginx;
 worker_processes  1;
-pid        /etc/nginx/logs/nginx.pid;
+pid        /usr/local/nginx/logs/nginx.pid;
 events {
     worker_connections  1024;
 }
 http {
-    include       /etc/nginx/mime.types;
+    include       /usr/local/nginx/conf/mime.types;
     default_type  application/octet-stream;
 
     sendfile        on;
@@ -90,10 +91,10 @@ http {
 	server {
 		listen 443 ssl http2;
 		server_name $domain;
-		root /usr/local/share/nginx/html;
+		root /usr/local/nginx/html;
 		index index.php index.html;
-		ssl_certificate /etc/nginx/ssl/$domain/cert.pem;
-		ssl_certificate_key /etc/nginx/ssl/live/$domain/privkey.pem;
+		ssl_certificate /usr/local/nginx/conf/fullchain.cer;
+		ssl_certificate_key /usr/local/nginx/conf/$domain.key;
 		#TLS 版本控制
 		ssl_protocols   TLSv1.3;
 		ssl_ciphers     TLS13-AES-256-GCM-SHA384:TLS13-CHACHA20-POLY1305-SHA256:TLS13-AES-128-GCM-SHA256:TLS13-AES-128-CCM-8-SHA256;
