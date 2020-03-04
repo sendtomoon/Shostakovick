@@ -11,8 +11,6 @@ yum -y install yum-utils
 yum -y install epel-release
 yum -y update
 
-yum-config-manager --enable rhui-REGION-rhel-server-extras rhui-REGION-rhel-server-optional
-yum -y install certbot python2-certbot-nginx
 yum -y install wget unzip
 yum -y install libtool perl-core zlib-devel gcc wget pcre* unzip
 useradd nginx
@@ -56,14 +54,6 @@ cd nginx-1.16.1
         --with-stream    \
         --with-stream_ssl_module
 make && make install
-#certbot certonly     \
-#		-d $domain     \
-#        --nginx     \
-#        --register-unsafely-without-email     \
-#        --config-dir /etc/nginx/ssl     \
-#        --nginx-ctl /etc/nginx/sbin/nginx     \
-#        --nginx-server-root /etc/nginx     \
-#        --agree-tos
 
 mkdir /etc/nginx/ssl
 
@@ -100,9 +90,9 @@ http {
 	server {
 		listen 443 ssl http2;
 		server_name $domain;
-		root /usr/share/nginx/html;
+		root /usr/local/share/nginx/html;
 		index index.php index.html;
-		ssl_certificate /etc/nginx/ssl/live/$domain/cert.pem;
+		ssl_certificate /etc/nginx/ssl/$domain/cert.pem;
 		ssl_certificate_key /etc/nginx/ssl/live/$domain/privkey.pem;
 		#TLS 版本控制
 		ssl_protocols   TLSv1.3;
@@ -112,24 +102,16 @@ http {
 		ssl_early_data on;
 		ssl_stapling on;
 		ssl_stapling_verify on;
-
-		location ~ \.php$ {
-			fastcgi_pass 127.0.0.1:9000;
-			fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
-			include fastcgi_params;
-		}
 		
 		location /order {
 			proxy_redirect off;
-			proxy_pass http://127.0.0.1:11234;
+			proxy_pass http://127.0.0.1:8986;
 			proxy_http_version 1.1;
 			proxy_set_header Upgrade \$http_upgrade;
 			proxy_set_header Connection "upgrade";
 			proxy_set_header Host \$http_host;
 		}
-		location / {
-			try_files \$uri \$uri/ /index.php?\$args;
-		}
+	
 	}
 }
 EOF
